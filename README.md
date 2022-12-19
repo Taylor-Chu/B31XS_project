@@ -7,4 +7,5 @@ GitHub repositories used:
 
 Datasets can be downloaded from instructions in https://github.com/burke86/astro_rcnn/
 
-New models can be trained by running `train.py`, initial weights and trained models can be downloaded from https://www.dropbox.com/home/B31XS_project
+New models can be trained by running `train.py`, initial weights and trained models can be downloaded from https://www.dropbox.com/home/B31XS_project.
+Models can be tested by running `test.py`.
