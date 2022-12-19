@@ -186,8 +186,8 @@ def train_mapper(dataset_dict, **read_image_args):
 if __name__ == '__main__':
     set_mpl_style() # Set matplotlib style
 
-    dirpath = '/work/sc004/sc004/tc1213/astrodet/dataset/' # Path to dataset
-    output_dir = '/work/sc004/sc004/tc1213/astrodet/output/' # Path to output directory
+    dirpath = '/work/sc004/sc004/tc1213/astrodet/dataset/' # Path to dataset, change accordingly
+    output_dir = '/work/sc004/sc004/tc1213/astrodet/output/' # Path to output directory, change accordingly
 
     dataset_names = ['train', 'test', 'val'] 
     
@@ -211,7 +211,7 @@ if __name__ == '__main__':
     cfg.DATASETS.TEST = ("astro_val") # Config calls this TEST, but it should be the val dataset
     cfg.TEST.EVAL_PERIOD = 40
     cfg.DATALOADER.NUM_WORKERS = 1
-    cfg.MODEL.WEIGHTS = '/work/sc004/sc004/tc1213/astrodet/mask_rcnn_R_50_C4_3x.pkl'  # Initialize from a local weights
+    cfg.MODEL.WEIGHTS = '/work/sc004/sc004/tc1213/astrodet/mask_rcnn_R_50_C4_3x.pkl'  # Initialize from a local weights, can be downloaded from dropbox link in README.md, should be changed accordingly
     cfg.SOLVER.IMS_PER_BATCH = 4
     cfg.SOLVER.BASE_LR = 0.001   # set learning rate
     cfg.SOLVER.STEPS = []        # do not decay learning rate
@@ -221,7 +221,7 @@ if __name__ == '__main__':
     cfg.OUTPUT_DIR = output_dir
     cfg.TEST.DETECTIONS_PER_IMAGE = 1000
     saveHook = toolkit.SaveHook()
-    saveHook.set_output_name("model_50")
+    saveHook.set_output_name("model_400") # Save model, name can be changed accordingly
     hookList = [saveHook]
 
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
@@ -232,4 +232,5 @@ if __name__ == '__main__':
 
     trainer = toolkit.AstroTrainer(model, loader, optimizer, cfg)
     trainer.register_hooks(hookList)
-    trainer.train(0, 50)
+    # epochs = iterations * batch_size / dataset_size
+    trainer.train(0, 400) # Train for 400 iterations corresponding to 51 epochs

@@ -43,7 +43,6 @@ from astrodet import astrodet as toolkit
 # Prettify the plotting
 from astrodet.astrodet import set_mpl_style
 
-# Register the datasets
 def get_astro_dicts(img_dir):
         
     # It's weird to call this img_dir
@@ -113,7 +112,6 @@ def get_astro_dicts(img_dir):
          
     return dataset_dicts
 
-# function to read image and apply selected normalisation
 def read_image(filename, normalize='lupton', stretch=5, Q=10, m=0, ceil_percentile=99.995, dtype=np.uint8):
     
     # Read image
@@ -164,7 +162,6 @@ def read_image(filename, normalize='lupton', stretch=5, Q=10, m=0, ceil_percenti
     
     return image
 
-# function to map training data and apply data augmentation
 def train_mapper(dataset_dict, **read_image_args):
 
     dataset_dict = copy.deepcopy(dataset_dict)  # it will be modified by code below
@@ -194,7 +191,6 @@ def train_mapper(dataset_dict, **read_image_args):
         "instances": utils.annotations_to_instances(annos, image.shape[1:]),
     }
 
-# function to map testing data
 def test_mapper(dataset_dict, **read_image_args):
 
     dataset_dict = copy.deepcopy(dataset_dict)  # it will be modified by code below
@@ -230,28 +226,31 @@ if __name__ == '__main__':
     dirpath = '/work/sc004/sc004/tc1213/astrodet/dataset/' # Path to dataset, should be changed accordingly
     dataset_names = ['train', 'test', 'val'] 
     
-    # Register dataset
     for i, d in enumerate(dataset_names):
         filenames_dir = os.path.join(dirpath,d)
         DatasetCatalog.register("astro_" + d, lambda: get_astro_dicts(filenames_dir))
         MetadataCatalog.get("astro_" + d).set(thing_classes=["star", "galaxy"], things_colors = ['blue', 'gray'])
     astro_metadata = MetadataCatalog.get("astro_train")
     
-    # Load dataset
     dataset_dicts = {}
     for i, d in enumerate(dataset_names):
         print(f'Loading {d}')
         dataset_dicts[d] = get_astro_dicts(os.path.join(dirpath, d))
     output_dir = '/work/sc004/sc004/tc1213/astrodet/output/JWST_20000/' # Path to output directory
     os.makedirs(output_dir, exist_ok=True)
-    
-    # Create config for network training setup
     cfg = get_cfg()
     cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_C4_3x.yaml")) # Get model structure
     cfg.DATASETS.TRAIN = ("astro_train") # Register Metadata
     cfg.DATASETS.TEST = ("astro_val") # Config calls this TEST, but it should be the val dataset
     cfg.TEST.EVAL_PERIOD = 40
     cfg.DATALOADER.NUM_WORKERS = 1
+    # if init_coco_weights:
+    #     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_C4_3x.yaml")  # Initialize from MS COCO
+    # else:
+    #     cfg.MODEL.WEIGHTS = os.path.join(output_dir, 'model_temp.pth')  # Initialize from a local weights
+    # cfg.MODEL.WEIGHTS = os.path.join(output_dir, 'model_temp.pth')  # Initialize from a local weights
+    # cfg.MODEL.WEIGHTS = '/work/sc004/sc004/tc1213/astrodet/mask_rcnn_R_50_C4_3x.pkl'  # Initialize from a local weights
+    # cfg.MODEL.WEIGHTS = '/work/sc004/sc004/tc1213/astrodet/astro_rcnn_decam.h5'  # Initialize from a local weights
     cfg.SOLVER.IMS_PER_BATCH = 4
     cfg.SOLVER.BASE_LR = 0.001   # pick a good LR -- start from 0.005
     cfg.SOLVER.STEPS = []        # do not decay learning rate
@@ -267,38 +266,61 @@ if __name__ == '__main__':
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5   # set a custom testing threshold
     predictor = DefaultPredictor(cfg)
     
-    nsample = 3
+    # nsample = 3
+    # # fig, axs = plt.subplots(1, nsample, figsize=(5*nsample, 5))
 
-    for i, d in enumerate(random.sample(dataset_dicts['test'], nsample)):
-        plt.figure(figsize=(10,10))
-        img = read_image(d["file_name"], normalize="lupton", stretch=5, Q=1, ceil_percentile=99.5)
-        outputs = predictor(img)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
+    # for i, d in enumerate(random.sample(dataset_dicts['test'], nsample)):
+    #     plt.figure(figsize=(10,10))
+    #     img = read_image(d["file_name"], normalize="lupton", stretch=5, Q=1, ceil_percentile=99.5)
+    #     outputs = predictor(img)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
         
-        print('total instances:', len(d['annotations']))
-        print('detected instances:', len(outputs['instances'].pred_boxes))
-        print('')
+    #     print('total instances:', len(d['annotations']))
+    #     print('detected instances:', len(outputs['instances'].pred_boxes))
+    #     print('')
         
-        v = Visualizer(img,
-                    metadata=astro_metadata, 
-                    scale=1, 
-                    instance_mode=ColorMode.IMAGE_BW   # remove the colors of unsegmented pixels. This option is only available for segmentation models
-        )
-        out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-        plt.imshow(out.get_image())
-        plt.axis('off')
-        plt.savefig(os.path.join(output_dir, f'pred_{i}.png'))
+    #     v = Visualizer(img,
+    #                 metadata=astro_metadata, 
+    #                 scale=1, 
+    #                 instance_mode=ColorMode.IMAGE_BW   # remove the colors of unsegmented pixels. This option is only available for segmentation models
+    #     )
+    #     out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+    #     plt.imshow(out.get_image())
+    #     plt.axis('off')
+    #     # plt.tight_layout()
+    #     plt.savefig(os.path.join(output_dir, f'pred_{i}.png'))
+    #     # fig.show()
+    d = dataset_dicts['test'][46]
+    plt.figure(figsize=(10,10))
+    img = read_image(d["file_name"], normalize="linear", stretch=5, Q=1, ceil_percentile=99.5)
+    outputs = predictor(img)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
+    
+    print('total instances:', len(d['annotations']))
+    print('detected instances:', len(outputs['instances'].pred_boxes))
+    print('')
+    
+    v = Visualizer(img,
+                metadata=astro_metadata, 
+                scale=1, 
+                instance_mode=ColorMode.IMAGE_BW   # remove the colors of unsegmented pixels. This option is only available for segmentation models
+    )
+    out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+    plt.imshow(out.get_image())
+    plt.axis('off')
+    # plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f'pred_{i}.png'))
+    # fig.show()
         
     # NOTE: New version has max_dets_per_image argument in default COCOEvaluator
-    evaluator = toolkit.COCOEvaluatorRecall("astro_val", use_fast_impl=True, output_dir=cfg.OUTPUT_DIR)
+    # evaluator = toolkit.COCOEvaluatorRecall("astro_val", use_fast_impl=True, output_dir=cfg.OUTPUT_DIR)
 
-    # First run with train_mapper to generate .json files consistent with training format
-    # Then run with test_mapper to get AP scores (doesn't work with augmentation mapper)
-    train_loader = build_detection_test_loader(dataset_dicts['val'], mapper=train_mapper)
-    test_loader = build_detection_test_loader(dataset_dicts['val'], mapper=test_mapper)
+    # # First run with train_mapper to generate .json files consistent with training format
+    # # Then run with test_mapper to get AP scores (doesn't work with augmentation mapper)
+    # train_loader = build_detection_test_loader(dataset_dicts['val'], mapper=train_mapper)
+    # test_loader = build_detection_test_loader(dataset_dicts['val'], mapper=test_mapper)
     
-    results = inference_on_dataset(predictor.model, test_loader, evaluator)
+    # results = inference_on_dataset(predictor.model, test_loader, evaluator)
     
-    np.save(os.path.join(output_dir, 'results.npy'), results) # save results to output directory to be plotted in result.ipynb
+    # np.save(os.path.join(output_dir, 'results.npy'), results)
     
     # ap_type = 'bbox' # Which type of precision/recall to use? 'segm', or 'bbox'
     # cls_names = ['star', 'galaxy']
