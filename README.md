@@ -5,7 +5,9 @@ GitHub repositories used:
 - https://github.com/burke86/astrodet/
 - https://github.com/facebookresearch/detectron2/
 
-Datasets can be downloaded from instructions in https://github.com/burke86/astro_rcnn/
+**Python 3.8.0** should be used in accordance with packages listed in `requirements.txt` for the codes to work.
 
-New models can be trained by running `train.py`, initial weights and trained models can be downloaded from https://www.dropbox.com/home/B31XS_project.
+Datasets for training, validation as well as testing can be downloaded from instructions in https://github.com/burke86/astro_rcnn/
+
+New models can be trained by running `train.py`, initial weights and trained models can be downloaded from [this dropbox link](https://www.dropbox.com/sh/jphwb6aunju34d2/AADQvXnmuXiy3skyUi_Vc7vSa?dl=0).
 Models can be tested by running `test.py`.
